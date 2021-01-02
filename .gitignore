@@ -1,0 +1,8 @@
+# Carpetas
+/node_modules
+/build
+/src/resources
+
+# Archivos
+.env
+generated.data.txt
