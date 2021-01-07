@@ -6,3 +6,4 @@
 # Archivos
 .env
 generated.data.txt
+/src/controllers/classes/animal.data.json

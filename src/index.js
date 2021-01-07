@@ -3,6 +3,7 @@ const generic = require('./routers/generic.routes');
 const pets = require('./routers/pets.routes');
 const express = require('express');
 const dotenv = require('dotenv');
+const animals = require('./routers/animals.routes');
 
 dotenv.config();
 
@@ -20,6 +21,7 @@ app.use(formidableMiddleware({ uploadDir: __dirname + '/resources/temp', keepExt
 // Rutas
 app.use(generic)
 app.use('/pets', pets)
+app.use('/animals', animals)
 
 // Conectando la base de datos
 require('./database/connection.db');
