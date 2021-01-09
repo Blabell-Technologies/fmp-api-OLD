@@ -12,7 +12,7 @@ module.exports = async (req, res) => {
   //#region  Validaciónes de datos
     //#region Verificamos que los campos necesarios no esten vacios, asi como la imagen 0
       try { is_set( pet_animal, pet_name, pet_photo_0, owner_name, owner_phone, owner_email, disappearance_date, disappearance_place, details ) }
-      catch (error) { console.log(error); return res.status(400).send({ code: 400, type: 'invalid-request' }) }
+      catch (error) { console.log(error); return res.status(400).send({ code: 400, type: 'invalid-request-error' }) }
     //#endregion
 
     //#region Comprobamos el mail
@@ -66,9 +66,9 @@ module.exports = async (req, res) => {
       const photo_path = photo_object.path;
 
       try { var upload_name = await upload.upload_image(photo_path); }
-      catch (error) { console.log(error); return res.status(500).json({ code: 500, msg: 'processing-image-error', field: photo_index }) }
+      catch (error) { console.log(error); return res.status(500).json({ code: 500, type: 'image-processing-error', field: photo_index }) }
     
-      images_urls.push(process.env.IMAGE_URL + upload_name)
+      images_urls.push(upload_name)
     }
   //#endregion
 
@@ -102,13 +102,15 @@ module.exports = async (req, res) => {
 
   //#region Guardamos los datos de la mascota en la base de datos
     try { await pet_information.save() }
-    catch (error) { console.error(error); return res.status(500).json({ code: 500, type: 'database-write-error' });  }
+    catch (error) { 
+      const path = Object.values(error.errors)[0].path;
+      if (error._message == 'Validation failed') return res.status(400).json({ code: 400, type: `validation-error`, field: path  })
+      console.error(error); return res.status(500).json({ code: 500, type: 'database-error' });
+    }
   //#endregion
 
   // TODO enviamos el mail de creación
   
-
   // Damos el okey de la creación
-  console.log('Nueva mascota guardada');
-  res.json({ code: 200, type: 'pet-published', information: { edit_id, view_id } });
+  res.json({ code: 200, details: { edit_id, view_id } });
 }

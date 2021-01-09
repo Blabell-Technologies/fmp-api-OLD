@@ -22,16 +22,17 @@ module.exports = async (req, res) => {
   
   // Obtenemos los datos de la mascota
   try { var pets_information = await Pets.find(query).limit(max_limit); } 
-  catch (error) { console.error(error); return res.status(500).json({ code: 500, msg: 'database-read-error' }) }
+  catch (error) { console.error(error); return res.status(500).json({ code: 500, type: 'database-error' }); }
 
   // Sanitizamos la información
   const formated_information = await Promise.all(pets_information.map( async pet_information => { 
     // TODO Cambiar el entorno de nominatim al publicador
     try { var disappearance_address = await fetch_nominatim(pet_information.disappearance_place.coordinates) }
-    catch (error) { console.log(error); }
+    catch (error) { console.log(error); return res.status(500).json({ code: 500, type: 'api-error' }); }
 
     // Retornamos el objeto decodificado
     return ({
+      id: pet_information.id,
       pet_name: pet_information.pet_name,
       pet_animal: pet_information.pet_animal,
       pet_race: pet_information.pet_race,
@@ -43,12 +44,10 @@ module.exports = async (req, res) => {
       },
 
       details: pet_information.details,
-      picture: pet_information.pictures[0],
-      url: process.env.ARTICLE_URL + pet_information.id
+      picture: process.env.IMAGE_URL + pet_information.pictures[0],
     });
   }));
 
   // Damos el ok de la lecrtura y devolvemos los datos de la mascota
-  console.log('Información de mascota');
-  res.json({ code: 200, msg: 'Pet information', information: { pets: formated_information } });
+  res.json({ code: 200, details: { items: formated_information } });
 }

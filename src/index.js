@@ -18,6 +18,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(formidableMiddleware({ uploadDir: __dirname + '/resources/temp', keepExtensions: true }));
 
+app.use((req,res, next) => { console.log(`[${req.ip}] ` + req.url); next(); });
+
 // Rutas
 app.use(generic)
 app.use('/pets', pets)

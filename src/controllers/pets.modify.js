@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
 
   // Verificamos que la mascota a editar exsista
   try { var pet_information = await Pets.findOne({ uuid: req.params.uuid }); }
-  catch (error) { console.error(error); return res.status(500).json({ code: 500, msg: 'Database read error' }) }
+  catch (error) { console.error(error); return res.status(500).json({ code: 500, type: 'database-error' }) }
 
   if (pet_information == null) return res.status(404).json({ code: 404, type: 'pet-error' })
 
@@ -77,14 +77,13 @@ module.exports = async (req, res) => {
     try { await Pets.findOneAndUpdate({ uuid: req.params.uuid }, query_object, { runValidators: true })  }
     catch (error) { 
       const path = Object.values(error.errors)[0].path;
-      console.error(error); return res.status(500).json({ code: 500, msg: 'database-write-error' });
       if (error._message == 'Validation failed') return res.status(400).json({ code: 400, type: `validation-error`, field: path  })
+      console.error(error); return res.status(500).json({ code: 500, type: 'database-error' });
     }
   //#endregion  
 
   // TODO Enviamos un mail notificando la edición
 
   // Damos el ok de la edición
-  console.log('Mascota editada');
-  res.json({ code: 200, type: 'pet-modified', details: query_object })
+  res.json({ code: 200, details: query_object })
 }
