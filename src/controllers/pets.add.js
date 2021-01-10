@@ -66,7 +66,7 @@ module.exports = async (req, res) => {
       const photo_path = photo_object.path;
 
       try { var upload_name = await upload.upload_image(photo_path); }
-      catch (error) { console.log(error); return res.status(500).json({ code: 500, type: 'image-processing-error', field: photo_index }) }
+      catch (error) { console.log(error); return res.status(500).json({ code: 500, type: 'image-error', field: photo_index }) }
     
       images_urls.push(upload_name)
     }

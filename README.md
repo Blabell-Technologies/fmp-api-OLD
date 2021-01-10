@@ -34,4 +34,4 @@ Ahora se nos habra generado una carpeta llamada `node_modules` la cual sera la e
 
 
 **Atención:** *Solo para entornos de desarrollo*
-Si estamos utilizando un entorno de desarrollo, la applicación la esta integrada para recibir los parametros usados desde las variables de entorno desde el archivo `.env`
+Si estamos utilizando un entorno de desarrollo, la applicación esta integrada con `dotenv` para recibir los parametros usados desde las variables de entorno desde el archivo `.env`
