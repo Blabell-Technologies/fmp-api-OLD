@@ -55,5 +55,5 @@ module.exports = async (req, res) => {
   
 
   // Damos el ok de la lecrtura y devolvemos los datos de la mascota
-  res.json({ code: 200, details: { pet: parsed_information } });
+  res.status(200).json({ code: 200, details: { pet: parsed_information } });
 }

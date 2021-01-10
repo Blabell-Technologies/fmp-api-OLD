@@ -32,7 +32,8 @@ app.use(async (req, res, next) => {
   }
 
   function write_log(data) {
-    try { fs.appendFileSync(__dirname + '/logs/log1.log', '\n' + data); }
+    const log_filename = `/logs/${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}.log`;
+    try { fs.appendFileSync(__dirname + log_filename, '\n' + data); }
     catch (error) { 
       if (error.errno == -4058) { fs.mkdirSync(__dirname + '/logs'); write_log(data); }
     }

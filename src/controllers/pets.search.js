@@ -48,5 +48,5 @@ module.exports = async (req, res) => {
   }));
 
   // Damos el ok de la lecrtura y devolvemos los datos de la mascota
-  res.json({ code: 200, details: { items: formated_information, page_details: { results: formated_information.length, next: pets_information_page.nextPage || false, total: pets_information_page.totalPages } } });
+  res.status(200).json({ code: 200, details: { items: formated_information, page_details: { results: formated_information.length, next: pets_information_page.nextPage || false, total: pets_information_page.totalPages } } });
 }

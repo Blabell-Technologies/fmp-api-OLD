@@ -112,5 +112,5 @@ module.exports = async (req, res) => {
   // TODO enviamos el mail de creación
   
   // Damos el okey de la creación
-  res.json({ code: 200, details: { edit_id, view_id } });
+  res.status(200).json({ code: 200, details: { edit_id, view_id } });
 }
