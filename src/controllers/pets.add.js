@@ -2,57 +2,83 @@ const upload = require('../lib/uploads.lib');
 const Pets = require('../database/pets.model');
 const { is_set, create_uuid } = require('../lib/common.lib');
 const Animlas = require('../controllers/classes/animal.controller.class');
+const fs = require('fs');
 
 const AnimalController = new Animlas();
 
-module.exports = async (req, res) => { 
+function write_log(data) {
+  const log_filename = `/logs/${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}.log`;
+  try { fs.appendFileSync(__dirname + log_filename, '\n' + data); }
+  catch (error) { 
+    if (error.errno == -4058) { fs.mkdirSync(__dirname + '/logs'); write_log(data); }
+  }
+}
+
+function send(req, res, status = res.statusCode, json = { code: 200 }) {
+  const ms = new Date().getTime() - req.request_time + 'ms';
+  const method = req.method;
+  const url = req.baseUrl + req.url;
+  let ip = req.ip.replace('::ffff:', '');
+  ip = (ip == '::1') ? 'localhost' : ip;
+
+  const log = `[${new Date().toUTCString()} • ${ms}] ${url} • ${method} • ${status} • ${ip}`;
+  console.log(log);
+  if (status == 500) { 
+    write_log(log)
+  }
+
+  json.code = status
+  res.status(status).json(json);
+}
+
+module.exports = async (req, res, next) => {
   var { pet_animal, pet_race, pet_name, owner_name, owner_phone, owner_email, owner_home, disappearance_date, disappearance_place, details, reward } = req.fields;
   const { pet_photo_0 } = req.files;
-  
+
   //#region  Validaciónes de datos
     //#region Verificamos que los campos necesarios no esten vacios, asi como la imagen 0
       try { is_set( pet_animal, pet_name, pet_photo_0, owner_name, owner_phone, owner_email, disappearance_date, disappearance_place, details ) }
-      catch (error) { console.log(error); return res.status(400).send({ code: 400, type: 'invalid-request-error' }) }
+      catch (error) { return send(req, res, 400, { type: 'invalid-request-error' }) }
     //#endregion
 
     //#region Comprobamos el mail
-      if (!/^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i.test(owner_email)) return res.status(406).json({ code: 406, type: 'validation-error', field: 'owner_email' })
+      if (!/^(([^<>()[\]\.,;:\s@\"]+(\.[^<>()[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i.test(owner_email)) return send(req, res, 406, { type: 'validation-error', field: 'owner_email' });
     //#endregion
     
     //#region Verificamos que el telefono sea valido
-      if (!/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/g.test(owner_phone)) return res.status(406).json({ code: 406, type: 'validation-error', field: 'owner_phone' });
+      if (!/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/g.test(owner_phone)) return send(req, res, 406, { type: 'validation-error', field: 'owner_phone' });
     //#endregion
 
     //#region Verificamos que la fecha sea valida
       try { disappearance_date = new Date(disappearance_date) }
-      catch (error) { return res.status(406).json({ code: 406, type: 'validation-error', field: 'disappearance_date' }); }
+      catch (error) { return send(req, res, 406, {type: 'validation-error', field: 'disappearance_date' }); }
     //#endregion
 
     //#region Verificamos que el tipo de animal exsista
-      if (!AnimalController.AniamlExist(pet_animal)) return res.status(406).json({ code: 406, type: 'validation-error', field: 'pet_animal' });
+      if (!AnimalController.AniamlExist(pet_animal)) return send(req, res, 406, {type: 'validation-error', field: 'pet_animal' });
     //#endregion
 
     //#region Verificamos que las coordenadas de desaparición sean validas
       disappearance_place = disappearance_place.split(',')
-      if (disappearance_place.length != 2) return res.status(406).json({ code: 406, type: 'validation-error', field: 'disappearance_place' });
+      if (disappearance_place.length != 2) return send(req, res, 406, {type: 'validation-error', field: 'disappearance_place' });
       disappearance_place = disappearance_place.map(coordinate => { coordinate = Number(coordinate);  if (!isNaN(coordinate) && coordinate <= 90 && coordinate >= -90 ) return coordinate; })
-      if (disappearance_place.includes(undefined)) return res.status(406).json({ code: 406, type: 'validation-error', field: 'disappearance_place' });
+      if (disappearance_place.includes(undefined)) return send(req, res, 406, {type: 'validation-error', field: 'disappearance_place' });
     //#endregion
 
     //#region Verificamos que la raza exsiste
-      if (pet_race != undefined) if (!AnimalController.RaceExist(pet_animal, pet_race)) return res.status(406).json({ code: 406, type: 'validation-error', field: 'pet_race' });
+      if (pet_race != undefined) if (!AnimalController.RaceExist(pet_animal, pet_race)) return send(req, res, 406, {type: 'validation-error', field: 'pet_race' });
     //#endregion
 
     //#region Verificamos que la recompensa sea un numero
-      if (reward != undefined) if (!is_set(reward)) return res.status(406).json({ code: 406, type: 'validation-error', field: 'reward' });
+      if (reward != undefined) if (!is_set(reward)) return send(req, res, 406, {type: 'validation-error', field: 'reward' });
     //#endregion
 
     //#region Verificamos que las coordenadas de la casa sean validas
       if (owner_home != undefined) {
         owner_home = owner_home.split(',')
-        if (owner_home.length != 2) return res.status(406).json({ code: 406, type: 'validation-error', field: 'owner_home' });
+        if (owner_home.length != 2) return send(req, res, 406, {type: 'validation-error', field: 'owner_home' });
         owner_home = owner_home.map(coordinate => { coordinate = Number(coordinate);  if (!isNaN(coordinate) && coordinate <= 90 && coordinate >= -90 ) return coordinate; })
-        if (owner_home.includes(undefined)) return res.status(406).json({ code: 406, type: 'validation-error', field: 'owner_home' });
+        if (owner_home.includes(undefined)) return send(req, res, 406, {type: 'validation-error', field: 'owner_home' });
       }
     //#endregion
   //#endregion
@@ -66,7 +92,7 @@ module.exports = async (req, res) => {
       const photo_path = photo_object.path;
 
       try { var upload_name = await upload.upload_image(photo_path); }
-      catch (error) { console.log(error); return res.status(500).json({ code: 500, type: 'image-error', field: photo_index }) }
+      catch (error) { console.log(error); return send(req, res, 500, { type: 'image-error', field: photo_index }) }
     
       images_urls.push(upload_name)
     }
@@ -83,7 +109,6 @@ module.exports = async (req, res) => {
       // Datos de la mascota
       pet_animal: pet_animal.toLowerCase(),
       pet_name,
-      pet_race: pet_race.toLowerCase(),
 
       // Datos de desaparición
       disappearance_date,
@@ -96,6 +121,9 @@ module.exports = async (req, res) => {
       uuid: create_uuid()
     });
 
+    // Si la raza no esta definida la agregamos
+    if (pet_race != undefined) { pet_information.pet_race = pet_race.toLowerCase(); }
+
     const edit_id = pet_information.uuid; // ID de edición
     const view_id = pet_information.id; // ID de vista
   //#endregion
@@ -104,13 +132,14 @@ module.exports = async (req, res) => {
     try { await pet_information.save() }
     catch (error) { 
       const path = Object.values(error.errors)[0].path;
-      if (error._message == 'Validation failed') return res.status(400).json({ code: 400, type: `validation-error`, field: path  })
-      console.error(error); return res.status(500).json({ code: 500, type: 'database-error' });
+      if (error._message == 'Validation failed') return send(req, res, 400, { type: `validation-error`, field: path  })
+      console.error(error); return send(req, res, 500, { type: 'database-error' });
     }
   //#endregion
 
   // TODO enviamos el mail de creación
-  
+
   // Damos el okey de la creación
-  res.status(200).json({ code: 200, details: { edit_id, view_id } });
+  
+  send(req, res, 200, { details: { edit_id, view_id } });
 }

@@ -32,6 +32,7 @@ app.use(async (req, res, next) => {
   }
 
   function write_log(data) {
+    const date = new Date();
     const log_filename = `/logs/${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}.log`;
     try { fs.appendFileSync(__dirname + log_filename, '\n' + data); }
     catch (error) { 
@@ -39,6 +40,7 @@ app.use(async (req, res, next) => {
     }
   }
 
+  
   req.on('end', function () {
     const ms = new Date().getTime() - req.request_time + 'ms';
     const method = req.method;

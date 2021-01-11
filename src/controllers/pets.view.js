@@ -10,11 +10,6 @@ module.exports = async (req, res) => {
   if (pet_information == null) { return res.status(404).json({ code: 404, type: 'pet-error' }) }
 
   // TODO Cambiar el entorno de nominatim al publicador
-  // Obtenemos la dirección del dueño
-  try { var owner_home_address = await fetch_nominatim(pet_information.owner_home.coordinates) }
-  catch (error) { console.log(error); return res.status(500).json({ code: 500, type: 'api-error' }); }
-
-  // TODO Cambiar el entorno de nominatim al publicador
   // Obtenemos la dirección de la desaparición
   try { var disappearance_address = await fetch_nominatim(pet_information.disappearance_place.coordinates) }
   catch (error) { console.log(error); return res.status(500).json({ code: 500, type: 'api-error' }); }
@@ -33,10 +28,6 @@ module.exports = async (req, res) => {
     owner_name: pet_information.owner_name,
     owner_email: pet_information.owner_email,
     owner_phone: pet_information.owner_phone,
-    owner_home: { 
-      coordinates: pet_information.owner_home.coordinates,
-      address: owner_home_address,
-    },
 
     // Información de la desaparición
     disappearance_date: pet_information.disappearance_date,
@@ -52,8 +43,18 @@ module.exports = async (req, res) => {
     found: pet_information.found
   }
 
-  
+  // TODO Cambiar el entorno de nominatim al publicador
+  // Obtenemos la dirección del dueño
+  if (pet_information.owner_home.coordinates.length == 2) {
+    try { var owner_home_address = await fetch_nominatim(pet_information.owner_home.coordinates) }
+    catch (error) { console.log(error); return res.status(500).json({ code: 500, type: 'api-error' }); }
 
+    parsed_information.owner_home = { 
+      coordinates: pet_information.owner_home.coordinates,
+      address: owner_home_address,
+    }
+  }
+  
   // Damos el ok de la lecrtura y devolvemos los datos de la mascota
   res.status(200).json({ code: 200, details: { pet: parsed_information } });
 }

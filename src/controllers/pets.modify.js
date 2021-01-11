@@ -85,5 +85,5 @@ module.exports = async (req, res) => {
   // TODO Enviamos un mail notificando la edición
 
   // Damos el ok de la edición
-  res.status(200).json({ code: 200, details: query_object })
+  res.status(200) .json({ code: 200, details: query_object })
 }

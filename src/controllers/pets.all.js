@@ -7,7 +7,7 @@ const geoip = require('geoip-lite');
 module.exports = async (req, res) => {
   // Verificamos si la petición tiene coordenadas de ubicación
   const max_limit = Number(req.query.limit) || 5;
-  var origin = geoip.lookup(req.ip.replace('::ffff:', '')).ll; // Origen por defecto, lat lon de la ip
+  // var origin = geoip.lookup(req.ip.replace('::ffff:', '')).ll; // Origen por defecto, lat lon de la ip
   var radius = Number(req.query.radius) || 15000; // Verificamos el radio, por defecto 15Km
 
   // Si el query origin esta seteado usamos esas coordenadas
