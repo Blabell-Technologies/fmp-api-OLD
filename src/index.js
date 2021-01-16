@@ -1,77 +1,36 @@
+// Importado de enrutadores
+const animals = require('./routers/animals.routes'); // Rutas de razas
+const generic = require('./routers/generic.routes'); // Rutas de cosas genericas
+const pets = require('./routers/pets.routes'); // Rutas de gestion de mascotas
+
 // Importado de librerias necesarias
-const animals = require('./routers/animals.routes');
-const generic = require('./routers/generic.routes');
-const pets = require('./routers/pets.routes');
-const formidable = require('formidable');
-const express = require('express');
-const dotenv = require('dotenv');
-const fs = require('fs');
+const formidable = require('express-formidable'); // Importación de express-formidable
+const express = require('express'); // Importación de express
+const dotenv = require('dotenv'); // Importación de dotenv
+const cors = require('cors'); // Importación de cors
 
 dotenv.config(); // Configuración de las variables de entorno
 
-// Iniciando express
-const app = express();
+const app = express(); // Iniciando express
 
-// Configuración
-app.set('port', process.env.PORT || 3000);
+app.set('port', process.env.PORT || 3000); // Configuración
 
 // Middleware
-app.use(async (req, res, next) => { 
-  req.request_time = new Date().getTime();
+app.use(cors()) // Configurando CORS
 
-  req.headers['content-type'] = req.headers['content-type'] || 'data/type';
-  if (req.headers['content-type'].includes('multipart/form-data;')) {
-    const form = new formidable.IncomingForm({ uploadDir: __dirname + '/resources/temp', keepExtensions: true });
-  
-    await new Promise((resolve, reject) => {
-      form.parse(req, (err, fields, files) => {
-        Object.assign(req, { err, fields, files });
-        resolve();
-      });
-    })
-  }
-
-  function write_log(data) {
-    const date = new Date();
-    const log_filename = `/logs/${date.getMonth() + 1}-${date.getDate()}-${date.getFullYear()}.log`;
-    try { fs.appendFileSync(__dirname + log_filename, '\n' + data); }
-    catch (error) { 
-      if (error.errno == -4058) { fs.mkdirSync(__dirname + '/logs'); write_log(data); }
-    }
-  }
-
-  
-  req.on('end', function () {
-    const ms = new Date().getTime() - req.request_time + 'ms';
-    const method = req.method;
-    const url = req.baseUrl + req.url;
-    let ip = req.ip.replace('::ffff:', '');
-    ip = (ip == '::1') ? 'localhost' : ip;
-    const http_code = res.statusCode;
-
-    const log = `[${new Date().toUTCString()} • ${ms}] ${url} • ${method} • ${http_code} • ${ip}`;
-    console.log(log);
-    if (http_code == 500) { 
-      write_log(log)
-    }
-  });
-
-  next();
-})
-
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-// app.use(formidableMiddleware({ uploadDir: __dirname + '/resources/temp', keepExtensions: true }));
+app.use(express.json()); // Configurando express para recibir JSONs
+app.use(express.urlencoded({ extended: false })); // Configurando express para recepcion de URLEncode
+app.use(formidable({ uploadDir: __dirname + '/resources/temp', keepExtensions: true, type: 'multipart' })); // Configurando recepción de formdata
 
 // Rutas
-app.use(generic)
-app.use('/pets', pets)
-app.use('/animals', animals)
+app.use(generic) // Rutas genericas
+app.use('/pets', pets) // Rutas de gestion de mascotas
+app.use('/animals', animals) // Rutas de gestion de animales
 
+// En caso de que ninguna de las rutas sean compatibles se deriva al error 404
 app.use((req, res) => { res.status(404).json({ code: 404, type: 'api-error' }) })
 
-// Conectando la base de datos
-require('./database/connection.db');
+require('./database/connection.db'); // Conectando la base de datos
 
 // Iniciando servidor
 app.listen(app.get('port'), () => console.log(`Servidor iniciado en el puerto ${app.get('port')}`));

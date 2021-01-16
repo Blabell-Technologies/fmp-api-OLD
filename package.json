@@ -13,7 +13,9 @@
   "GitHubRepo": "https://github.com/santi28/foundmypet-api",
   "license": "ISC",
   "dependencies": {
+    "cors": "^2.8.5",
     "express": "^4.17.1",
+    "express-formidable": "^1.2.0",
     "formidable": "^1.2.2",
     "geoip-lite": "^1.4.2",
     "mongoose": "^5.11.9",

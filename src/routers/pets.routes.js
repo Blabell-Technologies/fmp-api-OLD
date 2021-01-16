@@ -6,6 +6,7 @@ const sch_pet = require('../controllers/pets.search');
 const viw_pet = require('../controllers/pets.view');
 const add_pet = require('../controllers/pets.add');
 const modify_pet = require('../controllers/pets.modify');
+const cors = require('cors');
 
 // Estableciendo ruter
 const router = Router();
