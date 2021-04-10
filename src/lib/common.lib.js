@@ -36,26 +36,33 @@ const is_set = (...values) => {
  * @param {[number, number]} coordinates Latitud y longitud del lugar en cuestion
  */
 const fetch_nominatim = async (coordinates) => {
-  try { var geo_coordinates = await fetch(`https://nominatim.openstreetmap.org/reverse?format=geojson&limit=1&lat=${coordinates[0]}&lon=${coordinates[1]}&zoom=18`) }
-  catch (error) { throw error }
+  try { 
+    const url = `https://nominatim.openstreetmap.org/reverse?format=geojson&limit=1&lat=${coordinates[0]}&lon=${coordinates[1]}&zoom=18`;
+    var geo_coordinates = await fetch(url)
+    // Decodifciamos la respuesta del nominatim y usamos aquellos datos que requerimos
+    geo_coordinates = await geo_coordinates.json();
+  } catch (error) { throw error }
 
-  // Decodifciamos la respuesta del nominatim y usamos aquellos datos que requerimos
-  geo_coordinates = await geo_coordinates.json();
-  var geo_address = geo_coordinates.features[0].properties.address;
-  geo_address = `${geo_address.road}, ${geo_address.city_district}, ${geo_address.suburb}, ${geo_address.city},  ${geo_address.state}, ${geo_address.country}`;
-  geo_address = geo_address.split(',');
+  if (geo_coordinates.features != undefined) {
+    var geo_address = geo_coordinates.features[0].properties.address;
+    geo_address = `${geo_address.road} ${geo_address.house_number}, ${geo_address.suburb}, ${geo_address.city}, ${geo_address.state}`;
+    geo_address = geo_address.split(',');
+  
+    // Removemos  y trimeamos los undefineds
+    geo_address = await geo_address.map(elem => { 
+      elem = elem.trim();
+      if (elem != 'undefined') return elem
+      else return 
+    }).filter(elem => { return elem !== undefined });
+  
+    // Remplazamos aquellas calles estilo (75 - Av Rivadavia)
+    geo_address[0] = await geo_address[0].replace(/^.* - /gm, '');
+  
+    return geo_address.join(', ');
+  } else {
+    return 'invalid_address';
+  }
 
-  // Removemos  y trimeamos los undefineds
-  geo_address = await geo_address.map(elem => { 
-    elem = elem.trim();
-    if (elem != 'undefined') return elem
-    else return 
-  }).filter(elem => { return elem !== undefined });
-
-  // Remplazamos aquellas calles estilo (75 - Av Rivadavia)
-  geo_address[0] = await geo_address[0].replace(/^.* - /gm, '');
-
-  return geo_address.join(', ');
 }
 
 /**
@@ -69,4 +76,30 @@ const only_setted = (value) => {
   return true;
 }
 
-module.exports = { create_uuid, is_set, fetch_nominatim, only_setted };
+/**
+ * Inicia un ciclo de espera de x ms
+ * @param {Number} milliseconds Milisegundos a esperar
+ */
+const sleep = (milliseconds) => {
+  const date = Date.now();
+  let currentDate = null;
+  do {
+    currentDate = Date.now();
+  } while (currentDate - date < milliseconds);
+}
+
+/**
+ * Anula la sensitividad diacritica
+ *
+ * @param {string} string Texto
+ */
+const diacritic_sensitive_regex = (string = '') => {
+  return string.replace(/a/g, '[a,á,à,ä]')
+  .replace(/e/g, '[e,é,ë]')
+  .replace(/i/g, '[i,í,ï]')
+  .replace(/o/g, '[o,ó,ö,ò]')
+  .replace(/u/g, '[u,ü,ú,ù]');
+}
+
+
+module.exports = { create_uuid, is_set, fetch_nominatim, only_setted, sleep, diacritic_sensitive_regex };

@@ -7,7 +7,7 @@ const pet_schema = new Schema({
   owner_name: { type: String, required: true },
   owner_phone: { type: String, required: true },
   owner_email: { type: String, required: true },
-  owner_home: { type: { type: String, enum: ['Point'], required: true }, coordinates: { type: [Number], required: true } },
+  owner_home: { address: String, type: { type: String, enum: ['Point'] }, coordinates: { type: [Number] } },
 
   // Datos de la mascota
   pet_animal: { type: String, required: true },
@@ -16,7 +16,7 @@ const pet_schema = new Schema({
 
   // Datos de desaparición
   disappearance_date: { type: Date, required: true },
-  disappearance_place: { type: { type: String, enum: ['Point'], required: true }, coordinates: { type: [Number], required: true } },
+  disappearance_place: { address: String, type: { type: String, enum: ['Point'], required: true }, coordinates: { type: [Number], required: true } },
 
   // Detalles de la publicación
   details: { type: String, required: true },
@@ -26,9 +26,11 @@ const pet_schema = new Schema({
   // Generación automatica
   iat: { type: Date, default: new Date() },
   uuid: { type: String, default: create_uuid(), unique: true },
-  found: { type: Boolean, default: false }
-}, { collection: 'pets' });
+  found: { type: Boolean, default: false },
+  deleted: { type: Boolean, default: false }
+}, { collection: process.env.MONGO_TABLE, bufferTimeoutMS: 10000 });
 
+pet_schema.index({ pet_name: 'text', pet_animal: 'text', pet_race: 'text', details: 'text' })
 pet_schema.plugin(paginate);
 
 module.exports = model('Pets', pet_schema);

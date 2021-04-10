@@ -1,28 +1,36 @@
 // Librerias
-const { only_setted, diacritic_sensitive_regex } = require('../lib/common.lib');
 const { print } = require('../lib/logger.class.lib');
-
-// Modelos y controles
 const Pets = require('../database/pets.model');
+const geoip = require('geoip-lite');
 
+// Permite obtener todas las mascotas cercanas a la ubicación requerida
 module.exports = async (req, res) => {
-  var mongo_query = {  }; // Termino de busqueda usado por mongoose paginate
-
-  // Verificamos el termino de busca
-  if (only_setted(req.query.q)) {
-    var query = req.query.q; // Guardamos el query de busqueda
-    query = query.toLowerCase().trim(); // Lo convertimos a minuscula y lo trimiamos
-    if (only_setted(query)) mongo_query = { $or: [{ pet_name: { $regex: diacritic_sensitive_regex(query), $options: 'i' } }, { details: { $regex: diacritic_sensitive_regex(query), $options: 'i' } }, { pet_race: { $regex: diacritic_sensitive_regex(query), $options: 'i' } }, { pet_animal: { $regex: diacritic_sensitive_regex(query), $options: 'i' } }], deleted: false };
-  }
-
-  // Verificamos el limite
-  const limit = Number(req.query.limit) || 15;
+  // Verificamos si la petición tiene coordenadas de ubicación
+  const max_limit = Number(req.query.limit) || 5;
+  var origin = [-34.60371736549615, -58.381629785710956];
+  var radius = Number(req.query.radius) || 15000; // Verificamos el radio, por defecto 15Km
   const page = Number(req.query.page) || 1;
 
-  // Obtenemos los datos de la mascota mediante su nombre
-  try { var pets_information_page = await Pets.paginate(mongo_query, { limit, page, sort: { disappearance_date: -1 } }) } 
-  catch (error) { print.error(error); return { code: 500, type: 'database-error' } }
+  // Comprobamos, si hay una ip definida usamos las coordenadas de la misma
+  if (req.query.ip != undefined) {
+    origin = geoip.lookup(req.query.ip).ll;
+  }
+  // Si el query origin esta seteado usamos esas coordenadas
+  if (req.query.origin != undefined) {
+    origin = origin.split(',').map(elem => Number(elem));
+  }
+
+  // Creamos el query de busqueda
+  var query = { found: false, disappearance_place: { $geoWithin: { $center: [[origin[0], origin[1]], radius] } }, deleted: false };
   
+  // Si el query de consulta all esta seteado obtenemos todos las mascotas que no han sido encontradas
+  if (Boolean(req.query.all)) query = { found: false }; 
+  
+  // Obtenemos los datos de la mascota
+  try { var pets_information_page = await Pets.paginate(query, { limit: max_limit, page, sort: { disappearance_date: -1 } }) } 
+  catch (error) { print.error(error); return { code: 500, type: 'database-error' }; }
+
+  // Sanitizamos la información
   const pets_information = pets_information_page.docs;
   const formated_information = await Promise.all(pets_information.map( async pet_information => { 
     try { 
@@ -51,7 +59,6 @@ module.exports = async (req, res) => {
 
   if (formated_information.includes(false)) { print.error('Error processing pet information'); return { code: 500, type: 'api-error' }; }
 
-  
   // Damos el ok de la lecrtura y devolvemos los datos de la mascota
   return { code: 200, details: { items: formated_information, page_details: { results: formated_information.length, next: pets_information_page.nextPage || false, total: pets_information_page.totalPages } } };
 }
