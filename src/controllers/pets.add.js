@@ -34,7 +34,7 @@ module.exports = async (req, res, next) => {
 
     //#region Verificamos que la fecha sea valida
       if (!/(\d{4}|\d{2})[^\w\d\r\n:](0?[1-9]|1[0-2])[^\w\d\r\n:](0?[1-9]|[12]\d|30|31)\T(0?([01]?\d|2[0-3]):([0-5]?\d))/gm.test(disappearance_date)) return { code: 406, type: 'validation-error', field: 'disappearance_date' };
-      disappearance_date = new Date(disappearance_date)
+      disappearance_date = new Date(disappearance_date);
       if (disappearance_date > new Date()) return { code: 406, type: 'validation-error', field: 'disappearance_date' };
     //#endregion
 

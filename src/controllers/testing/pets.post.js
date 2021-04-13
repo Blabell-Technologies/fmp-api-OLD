@@ -1,8 +1,5 @@
 'use strict'
 
-// exclude = [cosa1, cosa2, cosa3]
-// only = [otracosa1, otracosa2]
-
 // Node modules
 const uuid = require('uuid');
 const e = require('express');
@@ -41,7 +38,7 @@ module.exports = async (req, res) => {
     // Busca la mascota por ID
     if (ObjectID.isValid(id)) var results = await pets.findOne({ _id: id, deleted: false }, { ...o_exclude, ...o_include }); 
     // Busca la mascota por UUID
-    if (uuid.validate(id)) var results = await pets.findOne({ uuid: id }, { ...o_exclude, ...o_include });
+    if (uuid.validate(id)) var results = await pets.findOne({ uuid: id, deleted: false }, { ...o_exclude, ...o_include });
 
   } catch (err) {
     if (err.toString().includes('buffering timed out')) return res.status(500).json({ kind: 'database-error', type: 'timed-out', description: 'Connection has been rejected due timeout' });

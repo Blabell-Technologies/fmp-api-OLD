@@ -27,7 +27,7 @@ const pet_schema = new Schema({
   iat: { type: Date, default: new Date() },
   uuid: { type: String, default: create_uuid(), unique: true },
   found: { type: Boolean, default: false },
-  deleted: { type: Boolean, default: false }
+  deleted: { type: Boolean, default: true }
 }, { collection: process.env.MONGO_TABLE, bufferTimeoutMS: 10000 });
 
 pet_schema.index({ pet_name: 'text', pet_animal: 'text', pet_race: 'text', details: 'text' })

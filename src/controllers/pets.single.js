@@ -10,7 +10,7 @@ module.exports = async (req, res) => {
   try { var pet_information = await Pets.findOne({ _id: req.params.id, deleted: false }); } 
   catch (error) { 
     if (error.kind == 'ObjectId') {
-      try { var pet_information = await Pets.findOne({ uuid: req.params.id }); uuid_request = true; } 
+      try { var pet_information = await Pets.findOne({ uuid: req.params.id, deleted: false }); uuid_request = true; } 
       catch (error) { 
         if (error.kind == 'ObjectId') return { code: 404, type: 'api-error' }
         print.error(error); 

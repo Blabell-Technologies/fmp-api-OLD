@@ -6,6 +6,17 @@ const controller_pet = require('../controllers/pets.controller');
 // Estableciendo ruter
 const router = Router();
 
+
+// Retorna los post dentro del radio especificado desde un punto de origen
+router.get('/insider/nearby', require('../controllers/testing/pets.nearby'));
+
+// Retorna la información de un post
+router.get('/insider/post/:id', require('../controllers/testing/pets.post'));
+
+// Verifica y activa un post via ID
+router.put('/insider/verify/:id', require('../controllers/pets.verify'));
+
+
 // Ver todas las mascotas perdidas
 router.get('/', controller_pet.index)
 // Ver mascota por id
@@ -18,11 +29,6 @@ router.post('/', controller_pet.add);
 router.put('/:uuid', controller_pet.modify);
 
 
-// Retorna los post dentro del radio especificado desde un punto de origen
-router.get('/insider/nearby', require('../controllers/testing/pets.nearby'));
-
-// Retorna la información de un post
-router.get('/insider/post/:id', require('../controllers/testing/pets.post'));
 
 
 // Borra un post de mascota
