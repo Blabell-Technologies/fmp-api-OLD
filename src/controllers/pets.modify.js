@@ -1,6 +1,8 @@
 // Librerias
 const { print } = require('../lib/logger.class.lib');
 const { only_setted, fetch_nominatim } = require('../lib/common.lib');
+const number_parser = require('libphonenumber-js');
+const _ = require('lodash');
 
 // Modelos y controles
 const Animal = require('./classes/animal.controller.class');
@@ -23,8 +25,65 @@ module.exports = async (req, res) => {
   //#region Verificamos los datos y los añadimos a la consulta
     // Verificamos el teléfono y lo añadimos a la consulta
     if (only_setted(owner_phone)) {
-      if (!/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/g.test(owner_phone)) return { code: 406, type: 'validation-error', field: 'owner_phone' };
-      query_object.owner_phone = owner_phone;
+      const phone_verify = (phone) => {      
+        try { phone = number_parser(phone); }
+        catch { return false }
+        if (phone == undefined) return false;
+
+        if (!phone.isValid()) return false;
+        return phone.formatInternational();
+      }
+      
+      let phone_summary = {};
+
+      function genHexString(len) {
+        const str = Math.floor(Math.random() * Math.pow(16, len)).toString(16);
+        return "0".repeat(len - str.length) + str;
+      }
+
+      owner_phone = JSON.parse(owner_phone);
+
+      //#region Ejecución de ordenes de remplazo
+        if (owner_phone.replace != undefined) {
+          for (index in owner_phone.replace) {
+            if (!Object.keys(pet_information.owner_phone._doc).includes(index)) {
+              print.warn("Key Not Found"); continue;
+            }
+  
+            const parsed = phone_verify(owner_phone.replace[index]);
+  
+            if (!parsed) { print.warn('Invalid Phone'); continue; }
+  
+            pet_information.owner_phone._doc[index] = parsed;
+          }
+        }
+      //#endregion
+
+      //#region Ejecución de ordenes de borrado
+        if (owner_phone.unset != undefined) {
+          for (index of owner_phone.unset) {
+            if (!Object.keys(pet_information.owner_phone._doc).includes(index)) {
+              print.warn("Key Not Found"); continue;
+            }
+
+            delete pet_information.owner_phone._doc[index];
+          }
+        }
+      //#endregion
+
+      //#region Ejecución de ordenes de añadido
+        if (owner_phone.add != undefined) {
+          for (phone of owner_phone.add) {
+            const parsed = phone_verify(phone);
+            if (!parsed) { print.warn('Invalid Phone'); continue; }
+
+            pet_information.owner_phone._doc[genHexString(6)] = parsed;
+          }
+        }
+      //#endregion
+      
+      if (Object.keys(pet_information.owner_phone._doc).length < 1) return { code: 406, type: 'validation-error', field: 'owner_phone' };
+      query_object.owner_phone = pet_information.owner_phone;
     }
 
     // Verificamos las coordenadas del hogar y las agregamos a la consulta
@@ -37,6 +96,7 @@ module.exports = async (req, res) => {
         if (owner_home.includes(undefined)) return { code: 406, type: 'validation-error', field: 'owner_home' };
         
         const owner_address = await fetch_nominatim(owner_home);
+        owner_home = owner_home.reverse();
         if (owner_address == 'invalid_address') return { code: 406, type: 'validation-error', field: 'owner_home' };
         query_object.owner_home = { type: "Point", coordinates: owner_home, address: owner_address };
       }
@@ -44,7 +104,7 @@ module.exports = async (req, res) => {
 
     // Verificamos la raza de la mascota y la agregamos a la consulta
     if (only_setted(pet_race)) {
-      if (pet_race === 'unset') { query_object.$unset.owner_home = ""; }
+      if (pet_race === 'unset') { query_object.$unset.pet_race = ""; }
       else {
         pet_race = pet_race.toLowerCase();
         if (!AnimalController.RaceExist(pet_information.pet_animal, pet_race)) return { code: 406, type: 'validation-error', field: 'pet_race' };

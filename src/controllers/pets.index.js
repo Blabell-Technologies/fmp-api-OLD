@@ -49,6 +49,7 @@ module.exports = async (req, res) => {
 
         details: pet_information.details,
         picture: process.env.IMAGE_URL + pet_information.pictures[0],
+        found: pet_information.found
 
       });
     }

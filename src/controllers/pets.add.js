@@ -2,7 +2,7 @@
 const { is_set, create_uuid, fetch_nominatim } = require('../lib/common.lib');
 const { print } = require('../lib/logger.class.lib');
 const upload = require('../lib/uploads.lib');
-
+var number_parser = require("libphonenumber-js")
 
 // Modelos y controladores
 const Animals = require('../controllers/classes/animal.controller.class');
@@ -12,6 +12,8 @@ const AnimalController = new Animals();
 
 // Función express
 module.exports = async (req, res, next) => {
+  console.log('Peticion entrante a PETS.ADD');
+
   try { is_set( req.fields, req.files ); }
   catch (error) { return { code: 400, type: 'invalid-request-error' } };
 
@@ -29,7 +31,24 @@ module.exports = async (req, res, next) => {
     //#endregion
     
     //#region Verificamos que el telefono sea valido
-      if (!/^[+]*[(]{0,1}[0-9]{1,4}[)]{0,1}[-\s\./0-9]*$/g.test(owner_phone)) return { code: 406, type: 'validation-error', field: 'owner_phone' };
+      let phone_list = {};
+
+      function genHexString(len) {
+        const str = Math.floor(Math.random() * Math.pow(16, len)).toString(16);
+        return "0".repeat(len - str.length) + str;
+      }
+
+      owner_phone = owner_phone.split(',').map(phone => {
+        try { phone = number_parser(phone); }
+        catch { return false }
+
+        if (phone == undefined) return false;
+
+        if (!phone.isValid()) return false;      
+        phone_list[genHexString(6)] = phone.formatInternational();
+      });
+
+      if (owner_phone.length < 1) return { code: 406, type: 'validation-error', field: 'owner_phone' };
     //#endregion
 
     //#region Verificamos que la fecha sea valida
@@ -86,11 +105,11 @@ module.exports = async (req, res, next) => {
   //#endregion
 
   //#region Obtenemos la direccion de desaparicion y de la casa
-    try { var disappearance_address = await fetch_nominatim(disappearance_place) }
+    try { var disappearance_address = await fetch_nominatim(disappearance_place); disappearance_place = disappearance_place.reverse(); }
     catch (error) { print.error(error); return { code: 500, type: 'api-error', details: 'fetch-error' }; }
     
     if (owner_home != undefined) {
-      try { var home_address = await fetch_nominatim(owner_home) }
+      try { var home_address = await fetch_nominatim(owner_home); owner_home = owner_home.reverse(); }
       catch (error) { print.error(error); return { code: 500, type: 'api-error', details: 'fetch-error' }; }
     }
   //#endregion
@@ -99,7 +118,7 @@ module.exports = async (req, res, next) => {
     const pet_information = new Pets({
       // Datos del dueño
       owner_name,
-      owner_phone,
+      owner_phone: phone_list,
       owner_email,
       owner_home: { type: 'Point', coordinates: owner_home, address: home_address },
 

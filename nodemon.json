@@ -1,1 +1,1 @@
-{ "ignore": ["./src/controllers/classes/animal.data.json", "./src/resources"] }
+{ "ignore": ["E:/dev/projects/found-my-pet/src/controllers/classes/animal.data.json"] }

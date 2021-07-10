@@ -14,7 +14,8 @@ const controller = async (req, res, next, controller = 'pets_single') => {
 const single = async (req, res, next) => { controller(req, res, next, 'pets_single') }
 const search = async (req, res, next) => { controller(req, res, next, 'pets_search') }
 const modify = async (req, res, next) => { controller(req, res, next, 'pets_modify') }
-const index = async (req, res, next) => { controller(req, res, next, 'pets_index') } 
-const add = async (req, res, next) => { controller(req, res, next, 'pets_add') }
+const index = async (req, res, next) => { controller(req, res, next, 'pets_index') }
+
+const add = async (req, res, next) => { controller(req, res, next, 'pets_add'); }
 
 module.exports = { controller, single, index, search, modify, add }

@@ -24,7 +24,7 @@ dotenv.config(); // Configuración de las  variables de entorno
 const app = express();
 
 // Configuración
-app.set('port', process.env.PORT || 3000); 
+app.set('port', process.env.PORT || 3000);
 // Directorio raiz del proyecto
 process.env.dirname = __dirname; 
 
@@ -37,9 +37,9 @@ process.env.dirname = __dirname;
   })
   app.use(cors({ origin: '*', methods: ['GET', 'POST', 'PUT', 'DELETE'] })) // Configurando CORS 
   app.use((req, res, next) => { req.request_time = new Date().getTime(); next(); });
-  app.use(express.json()); // Configurando express para recibir JSONs
-  app.use(express.urlencoded({ extended: false })); // Configurando express para recepcion de URLEncode
-  app.use(formidable({ uploadDir: __dirname + '/resources/temp', keepExtensions: true, type: 'multipart' })); // Configurando recepción de formdata
+  app.use(express.json({ limit: 30 * 1024 * 1024 })); // Configurando express para recibir JSONs
+  app.use(express.urlencoded({ extended: false, limit: 30 * 1024 * 1024 })); // Configurando express para recepcion de URLEncode
+  app.use(formidable({ uploadDir: __dirname + '/resources/temp', keepExtensions: true, type: 'multipart', maxFileSize: 30 * 1024 * 1024 })); // Configurando recepción de formdata
 //#endregion
 
 //#region Rutas

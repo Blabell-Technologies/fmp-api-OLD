@@ -1,6 +1,6 @@
 # Found My Pet
 *Descripción*
-## ✍️ Clonado del repositorio
+##  Clonado del repositorio ✍️
 *Para poder realizar la colonación correcta del repositorio de FoundMyPet, recomendamos seguir las instrucciónes para que se puedan cumplir todas las condiciónes necesarias para el correcto funcionamiento de la API en la etapa de producción*
 #### 📋 Pre-Requisitos
 *A continuación se listan todos los progrmas necesarios para el funcionamiento de la API*
